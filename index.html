@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏀 HOOPS — 3D Street Basketball</title>
+<title>🏀 HOOPS — NBA Basketball</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
@@ -12,24 +12,51 @@
 
   #ui{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
 
-  #hud{
-    position:absolute;top:20px;left:50%;transform:translateX(-50%);
-    display:flex;gap:28px;align-items:center;
-    background:rgba(0,0,0,.5);padding:8px 28px;border-radius:30px;backdrop-filter:blur(10px)
+  /* NBA-style scoreboard */
+  #scoreboard{
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;
+    background:rgba(0,0,0,.85);border-radius:6px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);
   }
-  .hi{text-align:center}
-  .hl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:600}
-  .hv{font-family:'Bebas Neue',sans-serif;font-size:42px;color:#fff;line-height:1}
-  .hd{width:1px;height:32px;background:rgba(255,255,255,.1)}
+  .team-score{
+    display:flex;align-items:center;padding:6px 16px;gap:10px;min-width:120px;
+  }
+  .team-score.home{background:rgba(0,80,180,.3)}
+  .team-score.away{background:rgba(180,30,30,.3)}
+  .team-name{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:600}
+  .team-pts{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;line-height:1;min-width:40px;text-align:center}
+  #clock-box{
+    display:flex;flex-direction:column;align-items:center;padding:4px 14px;
+    background:rgba(0,0,0,.6);min-width:80px;
+  }
+  #quarter{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)}
+  #clock{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;line-height:1}
+  #shot-clock{font-family:'Bebas Neue',sans-serif;font-size:16px;color:#ff4444;line-height:1}
 
-  #pw{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);width:240px;opacity:0;transition:opacity .2s}
+  /* Action indicator */
+  #action{
+    position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+    font-family:'Bebas Neue';font-size:18px;letter-spacing:3px;color:rgba(255,255,255,.4);
+    text-transform:uppercase;white-space:nowrap;
+  }
+
+  /* Power bar for shooting */
+  #pw{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);width:200px;opacity:0;transition:opacity .2s}
   #pw.on{opacity:1}
   #pt{width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
   #pf{height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#00e676,#ffea00,#ff3d00)}
   #pl{text-align:center;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px}
 
-  #ins{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);white-space:nowrap}
+  /* Controls help */
+  #controls{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);
+    white-space:nowrap;display:flex;gap:16px;
+  }
+  .ctrl-key{color:rgba(255,255,255,.5);font-weight:700}
 
+  /* Title screen */
   #title{
     position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -49,10 +76,11 @@
   #pbtn:hover{transform:scale(1.05);box-shadow:0 4px 50px rgba(255,140,0,.5)}
   #ltxt{margin-top:16px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3)}
 
+  /* Popup text */
   .sp{
-    position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);
-    font-family:'Bebas Neue';font-size:72px;pointer-events:none;
-    animation:pu 1s forwards;text-shadow:0 0 40px currentColor;z-index:20
+    position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
+    font-family:'Bebas Neue';font-size:64px;pointer-events:none;
+    animation:pu .8s forwards;text-shadow:0 0 40px currentColor;z-index:20
   }
   @keyframes pu{
     0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
@@ -60,35 +88,44 @@
     40%{transform:translate(-50%,-50%) scale(1)}
     100%{opacity:0;transform:translate(-50%,-65%) scale(1)}
   }
-
-  #stk{
-    position:absolute;top:78px;left:50%;transform:translateX(-50%);
-    font-family:'Bebas Neue';font-size:24px;color:#ff8c00;letter-spacing:4px;
-    opacity:0;transition:opacity .3s;text-shadow:0 0 20px rgba(255,140,0,.5)
-  }
-  #stk.on{opacity:1}
 </style>
 </head>
 <body>
 
 <div id="title">
   <h1><span>🏀</span> HOOPS</h1>
-  <div class="sub">3D Street Basketball</div>
+  <div class="sub">NBA Basketball</div>
   <button id="pbtn">PLAY</button>
   <div id="ltxt">Loading models...</div>
 </div>
 
 <div id="ui">
-  <div id="hud">
-    <div class="hi"><div class="hl">Score</div><div class="hv" id="vs">0</div></div>
-    <div class="hd"></div>
-    <div class="hi"><div class="hl">Shots</div><div class="hv" id="vt">0</div></div>
-    <div class="hd"></div>
-    <div class="hi"><div class="hl">Pct</div><div class="hv" id="vp">0%</div></div>
+  <div id="scoreboard">
+    <div class="team-score home">
+      <div class="team-name">HOME</div>
+      <div class="team-pts" id="home-pts">0</div>
+    </div>
+    <div id="clock-box">
+      <div id="quarter">1ST QTR</div>
+      <div id="clock">12:00</div>
+      <div id="shot-clock">24</div>
+    </div>
+    <div class="team-score away">
+      <div class="team-pts" id="away-pts">0</div>
+      <div class="team-name">AWAY</div>
+    </div>
   </div>
-  <div id="stk"></div>
+
   <div id="pw"><div id="pl">Power</div><div id="pt"><div id="pf"></div></div></div>
-  <div id="ins">CLICK & HOLD to charge · RELEASE to shoot · MOVE to aim</div>
+
+  <div id="action">Move to the hoop</div>
+
+  <div id="controls">
+    <span><span class="ctrl-key">WASD</span> Move</span>
+    <span><span class="ctrl-key">SPACE</span> Sprint</span>
+    <span><span class="ctrl-key">CLICK</span> Shoot/Dunk</span>
+    <span><span class="ctrl-key">E</span> Steal</span>
+  </div>
 </div>
 
 <script type="importmap">
@@ -103,220 +140,886 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // --- DOM ---
 const $ = id => document.getElementById(id);
-const vsEl=$('vs'), vtEl=$('vt'), vpEl=$('vp'), stkEl=$('stk');
+const homePtsEl=$('home-pts'), awayPtsEl=$('away-pts');
+const clockEl=$('clock'), shotClockEl=$('shot-clock'), quarterEl=$('quarter');
 const pwEl=$('pw'), pfEl=$('pf'), titleEl=$('title'), pbtnEl=$('pbtn'), ltxtEl=$('ltxt');
+const actionEl=$('action');
 
-// --- STATE ---
-let score=0, shots=0, streak=0;
-let ball, player, court;
-let inFlight=false, vel=new THREE.Vector3();
-const G=new THREE.Vector3(0,-9.8,0);
-let charging=false, chargeT=0;
-let mx=0, my=0, scored=false, started=false;
-const HOOP=new THREE.Vector3(0, 3.05, -6);
+// ==========================================================
+// CONSTANTS
+// ==========================================================
+const COURT_LENGTH = 28;     // full court ~28m (NBA regulation)
+const COURT_WIDTH = 15;
+const HOOP_HEIGHT = 3.05;
+const HOOP_OFFSET_Z = COURT_LENGTH/2 - 1.2;  // hoop near each end
+const THREE_PT_DIST = 7.24;
+const DUNK_RANGE = 1.8;
+const SHOOT_RANGE = 9;
+const PLAYER_SPEED = 5;
+const SPRINT_MULT = 1.7;
+const DRIBBLE_SPEED = 3;
+const AI_SPEED = 3.5;
+const G_VEC = new THREE.Vector3(0, -9.8, 0);
+const BALL_RADIUS = 0.24;
+const SHOT_CLOCK_MAX = 24;
+const QUARTER_TIME = 180; // 3 min quarters for fun pace
 
-// --- SCENE ---
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0d0d1a);
-scene.fog=new THREE.FogExp2(0x0d0d1a, 0.012);
+// Hoop positions (home attacks +Z, away attacks -Z)
+const HOOP_HOME = new THREE.Vector3(0, HOOP_HEIGHT, -HOOP_OFFSET_Z);
+const HOOP_AWAY = new THREE.Vector3(0, HOOP_HEIGHT, HOOP_OFFSET_Z);
 
-const cam=new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 300);
-cam.position.set(0, 4, 12);
+// ==========================================================
+// GAME STATE
+// ==========================================================
+let homeScore=0, awayScore=0;
+let quarter=1, gameClock=QUARTER_TIME, shotClock=SHOT_CLOCK_MAX;
+let possession='home'; // 'home' = player, 'away' = AI
+let started=false, paused=false;
 
-const ren=new THREE.WebGLRenderer({antialias:true});
+let ball, playerModel, aiModel, court;
+let playerPos = new THREE.Vector3(0, 0, 5);
+let playerVel = new THREE.Vector3();
+let playerFacing = 0; // rotation Y
+let aiPos = new THREE.Vector3(0, 0, -5);
+let aiTarget = new THREE.Vector3();
+let aiFacing = 0;
+let aiState = 'defend'; // 'defend', 'attack', 'shoot'
+let aiShootTimer = 0;
+
+let ballInFlight = false;
+let ballVel = new THREE.Vector3();
+let ballHolder = 'home'; // 'home', 'away', null (loose)
+let ballLoose = false;
+let scored = false;
+
+let isDribbling = true;
+let dribblePhase = 0;
+
+// Shooting
+let charging = false, chargeTime = 0;
+let isDunking = false;
+let dunkProgress = 0;
+let dunkStart = new THREE.Vector3();
+let dunkTarget = new THREE.Vector3();
+
+// Input
+const keys = {};
+let mouseX = 0, mouseY = 0;
+
+// ==========================================================
+// SCENE
+// ==========================================================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d1a);
+scene.fog = new THREE.FogExp2(0x0d0d1a, 0.008);
+
+const cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 500);
+
+const ren = new THREE.WebGLRenderer({antialias:true});
 ren.setSize(innerWidth, innerHeight);
 ren.setPixelRatio(Math.min(devicePixelRatio, 2));
-ren.shadowMap.enabled=true;
-ren.shadowMap.type=THREE.PCFSoftShadowMap;
-ren.toneMapping=THREE.ACESFilmicToneMapping;
-ren.toneMappingExposure=1.3;
+ren.shadowMap.enabled = true;
+ren.shadowMap.type = THREE.PCFSoftShadowMap;
+ren.toneMapping = THREE.ACESFilmicToneMapping;
+ren.toneMappingExposure = 1.4;
 document.body.insertBefore(ren.domElement, document.body.firstChild);
 
-// --- LIGHTS ---
-scene.add(new THREE.AmbientLight(0x606080, 0.7));
-const sun=new THREE.DirectionalLight(0xfff0e0, 1.2);
-sun.position.set(8,20,10); sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.near=0.5; sun.shadow.camera.far=60;
-sun.shadow.camera.left=-20; sun.shadow.camera.right=20;
-sun.shadow.camera.top=20; sun.shadow.camera.bottom=-20;
+// ==========================================================
+// LIGHTS — arena style
+// ==========================================================
+scene.add(new THREE.AmbientLight(0x404060, 0.5));
+
+const sun = new THREE.DirectionalLight(0xfff5e8, 1.0);
+sun.position.set(10, 30, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 80;
+sun.shadow.camera.left = -25;
+sun.shadow.camera.right = 25;
+sun.shadow.camera.top = 25;
+sun.shadow.camera.bottom = -25;
 scene.add(sun);
-scene.add(new THREE.DirectionalLight(0x8090ff, 0.3));
-const spot=new THREE.SpotLight(0xff8c00, 2, 30, Math.PI/5, 0.5);
-spot.position.set(0,14,-5); spot.target.position.set(0,3,-6);
-scene.add(spot); scene.add(spot.target);
 
-// --- FLOOR ---
-const fl=new THREE.Mesh(new THREE.PlaneGeometry(60,60), new THREE.MeshStandardMaterial({color:0x1a1a2e, roughness:0.9}));
-fl.rotation.x=-Math.PI/2; fl.receiveShadow=true; scene.add(fl);
+// Fill lights for arena feel
+const fill1 = new THREE.DirectionalLight(0x8090ff, 0.3);
+fill1.position.set(-10, 15, 10);
+scene.add(fill1);
+const fill2 = new THREE.DirectionalLight(0xff9060, 0.2);
+fill2.position.set(10, 15, -10);
+scene.add(fill2);
 
-// --- BASKETBALL ---
+// Spotlights on each hoop
+function addHoopSpot(hoopPos) {
+  const s = new THREE.SpotLight(0xffffff, 3, 40, Math.PI/6, 0.5);
+  s.position.set(hoopPos.x, 18, hoopPos.z);
+  s.target.position.copy(hoopPos);
+  scene.add(s);
+  scene.add(s.target);
+}
+addHoopSpot(HOOP_HOME);
+addHoopSpot(HOOP_AWAY);
+
+// ==========================================================
+// COURT FLOOR (fallback if model doesn't load)
+// ==========================================================
+const floorGeo = new THREE.PlaneGeometry(COURT_WIDTH + 10, COURT_LENGTH + 10);
+const floorMat = new THREE.MeshStandardMaterial({color: 0x1a1a2e, roughness: 0.9});
+const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+floorMesh.rotation.x = -Math.PI/2;
+floorMesh.receiveShadow = true;
+scene.add(floorMesh);
+
+// Court lines
+function drawCourtLines() {
+  const lineMat = new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.3});
+  const hw = COURT_WIDTH/2, hl = COURT_LENGTH/2;
+
+  // Boundary
+  const bnd = [new THREE.Vector3(-hw,0.01,-hl), new THREE.Vector3(hw,0.01,-hl),
+               new THREE.Vector3(hw,0.01,hl), new THREE.Vector3(-hw,0.01,hl), new THREE.Vector3(-hw,0.01,-hl)];
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(bnd), lineMat));
+
+  // Half court line
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-hw,0.01,0), new THREE.Vector3(hw,0.01,0)
+  ]), lineMat));
+
+  // Center circle
+  const cc = [];
+  for(let i=0;i<=64;i++){const a=i/64*Math.PI*2; cc.push(new THREE.Vector3(Math.cos(a)*1.8, 0.01, Math.sin(a)*1.8));}
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(cc), lineMat));
+
+  // 3-point arcs and keys for each end
+  [1, -1].forEach(side => {
+    const hz = side * HOOP_OFFSET_Z;
+    // Key / paint (5.8m wide, 5.8m deep)
+    const kw=2.9, kd=5.8;
+    const key = [new THREE.Vector3(-kw,0.01,hz), new THREE.Vector3(-kw,0.01,hz-side*kd),
+                 new THREE.Vector3(kw,0.01,hz-side*kd), new THREE.Vector3(kw,0.01,hz)];
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(key), lineMat));
+
+    // Free throw circle
+    const ftc = [];
+    for(let i=0;i<=32;i++){const a=i/32*Math.PI*2; ftc.push(new THREE.Vector3(Math.cos(a)*1.8,0.01,hz-side*kd+Math.sin(a)*1.8));}
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ftc), lineMat));
+
+    // 3-point arc
+    const arc = [];
+    const arcCenter = new THREE.Vector3(0, 0, hz);
+    for(let i=-90;i<=90;i+=2){
+      const a=(i*Math.PI/180);
+      arc.push(new THREE.Vector3(Math.sin(a)*THREE_PT_DIST, 0.01, hz - side*Math.cos(a)*THREE_PT_DIST));
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(arc), lineMat));
+  });
+}
+drawCourtLines();
+
+// ==========================================================
+// BASKETBALL
+// ==========================================================
 {
-  const g=new THREE.SphereGeometry(0.24, 32, 32);
-  const c=document.createElement('canvas'); c.width=c.height=256;
-  const x=c.getContext('2d');
+  const g = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+  const c = document.createElement('canvas'); c.width=c.height=256;
+  const x = c.getContext('2d');
   x.fillStyle='#e87a20'; x.fillRect(0,0,256,256);
   x.strokeStyle='#2a1a0a'; x.lineWidth=3;
   x.beginPath(); x.moveTo(0,128); x.lineTo(256,128); x.stroke();
   x.beginPath(); x.moveTo(128,0); x.lineTo(128,256); x.stroke();
   x.beginPath(); x.arc(128,128,80,0,Math.PI*2); x.stroke();
-  ball=new THREE.Mesh(g, new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c), roughness:0.7, metalness:0.05}));
-  ball.castShadow=true; scene.add(ball);
+  ball = new THREE.Mesh(g, new THREE.MeshStandardMaterial({map: new THREE.CanvasTexture(c), roughness:0.7, metalness:0.05}));
+  ball.castShadow = true;
+  scene.add(ball);
 }
 
-function resetBall(){
-  ball.position.set(0, 2.2, 5.5);
-  vel.set(0,0,0); inFlight=false; scored=false;
+// ==========================================================
+// HOOPS (both ends)
+// ==========================================================
+function createHoop(hoopPos) {
+  const group = new THREE.Group();
+
+  // Rim
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.45, 0.025, 16, 32),
+    new THREE.MeshStandardMaterial({color:0xff4500, metalness:0.8, roughness:0.3})
+  );
+  rim.rotation.x = Math.PI/2;
+  rim.position.copy(hoopPos);
+  rim.castShadow = true;
+  group.add(rim);
+
+  // Backboard
+  const bb = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 1.2, 0.05),
+    new THREE.MeshStandardMaterial({color:0xffffff, transparent:true, opacity:0.45, roughness:0.1})
+  );
+  const bbOffset = hoopPos.z > 0 ? 0.5 : -0.5;
+  bb.position.set(hoopPos.x, hoopPos.y+0.5, hoopPos.z+bbOffset);
+  group.add(bb);
+
+  // Pole
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, hoopPos.y+0.9, 8),
+    new THREE.MeshStandardMaterial({color:0x888888, metalness:0.9, roughness:0.2})
+  );
+  pole.position.set(hoopPos.x, (hoopPos.y+0.9)/2, hoopPos.z+bbOffset*1.1);
+  group.add(pole);
+
+  // Net
+  const net = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.25, 0.6, 12, 4, true),
+    new THREE.MeshBasicMaterial({color:0xffffff, wireframe:true, transparent:true, opacity:0.35})
+  );
+  net.position.set(hoopPos.x, hoopPos.y-0.35, hoopPos.z);
+  group.add(net);
+
+  scene.add(group);
 }
-resetBall();
+createHoop(HOOP_HOME);
+createHoop(HOOP_AWAY);
 
-// --- HOOP ---
-{
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(0.45,0.025,16,32), new THREE.MeshStandardMaterial({color:0xff4500,metalness:0.8,roughness:0.3}));
-  rim.rotation.x=Math.PI/2; rim.position.copy(HOOP); rim.castShadow=true; scene.add(rim);
-  const bb=new THREE.Mesh(new THREE.BoxGeometry(1.8,1.2,0.05), new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:0.45,roughness:0.1}));
-  bb.position.set(HOOP.x, HOOP.y+0.5, HOOP.z-0.5); scene.add(bb);
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,HOOP.y+0.9,8), new THREE.MeshStandardMaterial({color:0x888888,metalness:0.9,roughness:0.2}));
-  pole.position.set(HOOP.x, (HOOP.y+0.9)/2, HOOP.z-0.55); scene.add(pole);
-  const net=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.25,0.6,12,4,true), new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:0.35}));
-  net.position.set(HOOP.x, HOOP.y-0.35, HOOP.z); scene.add(net);
+// ==========================================================
+// PLAYER CAPSULES (fallback if models don't load)
+// ==========================================================
+function createPlayerCapsule(color) {
+  const group = new THREE.Group();
+  // Body
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.25, 1.0, 8, 16),
+    new THREE.MeshStandardMaterial({color, roughness:0.6})
+  );
+  body.position.y = 0.85;
+  body.castShadow = true;
+  group.add(body);
+
+  // Head
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 16, 16),
+    new THREE.MeshStandardMaterial({color: 0xdeb887, roughness:0.7})
+  );
+  head.position.y = 1.6;
+  head.castShadow = true;
+  group.add(head);
+
+  return group;
 }
 
-// --- LOAD MODELS ---
-const ldr=new GLTFLoader();
-let nLoaded=0;
-function modelDone(){ nLoaded++; if(nLoaded>=2){ ltxtEl.textContent='Ready!'; pbtnEl.style.display='block'; } }
+// Home player (blue)
+const playerCapsule = createPlayerCapsule(0x0055cc);
+scene.add(playerCapsule);
 
-ldr.load('court.glb', gltf=>{
-  court=gltf.scene;
-  const b=new THREE.Box3().setFromObject(court);
-  const sz=new THREE.Vector3(); b.getSize(sz);
-  const cn=new THREE.Vector3(); b.getCenter(cn);
-  court.scale.setScalar(25/Math.max(sz.x,sz.y,sz.z));
+// AI player (red)
+const aiCapsule = createPlayerCapsule(0xcc2200);
+scene.add(aiCapsule);
+
+// ==========================================================
+// LOAD MODELS
+// ==========================================================
+const ldr = new GLTFLoader();
+let nLoaded = 0;
+function modelDone(){
+  nLoaded++;
+  if(nLoaded >= 2){
+    ltxtEl.textContent = 'Ready!';
+    pbtnEl.style.display = 'block';
+  }
+}
+
+ldr.load('court.glb', gltf => {
+  court = gltf.scene;
+  const b = new THREE.Box3().setFromObject(court);
+  const sz = new THREE.Vector3(); b.getSize(sz);
+  const cn = new THREE.Vector3(); b.getCenter(cn);
+  const scale = COURT_LENGTH / Math.max(sz.x, sz.z);
+  court.scale.setScalar(scale);
   b.setFromObject(court); b.getCenter(cn);
   court.position.sub(cn);
-  b.setFromObject(court); court.position.y-=b.min.y;
-  court.traverse(c=>{if(c.isMesh){c.receiveShadow=true;c.castShadow=true;}});
+  b.setFromObject(court);
+  court.position.y -= b.min.y;
+  court.traverse(c => { if(c.isMesh){ c.receiveShadow=true; c.castShadow=true; } });
   scene.add(court);
-  ltxtEl.textContent='Court loaded...';
+  ltxtEl.textContent = 'Court loaded...';
   modelDone();
-}, p=>{if(p.total) ltxtEl.textContent='Court '+Math.round(p.loaded/p.total*100)+'%';},
-  ()=>{ltxtEl.textContent='Court skipped'; modelDone();});
+}, p => { if(p.total) ltxtEl.textContent = 'Court ' + Math.round(p.loaded/p.total*100) + '%'; },
+  () => { ltxtEl.textContent = 'Court skipped'; modelDone(); });
 
-ldr.load('player.glb', gltf=>{
-  player=gltf.scene;
-  const b=new THREE.Box3().setFromObject(player);
-  const sz=new THREE.Vector3(); b.getSize(sz);
-  const cn=new THREE.Vector3(); b.getCenter(cn);
-  player.scale.setScalar(1.4/sz.y);
-  b.setFromObject(player); b.getCenter(cn);
-  player.position.sub(cn);
-  b.setFromObject(player); player.position.y-=b.min.y;
-  player.position.z=6;
-  player.rotation.y=Math.PI;
-  player.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-  scene.add(player);
-  ltxtEl.textContent='Player loaded...';
+ldr.load('player.glb', gltf => {
+  playerModel = gltf.scene;
+  const b = new THREE.Box3().setFromObject(playerModel);
+  const sz = new THREE.Vector3(); b.getSize(sz);
+  const cn = new THREE.Vector3(); b.getCenter(cn);
+  playerModel.scale.setScalar(1.8 / sz.y);
+  b.setFromObject(playerModel); b.getCenter(cn);
+  playerModel.position.sub(cn);
+  b.setFromObject(playerModel); playerModel.position.y -= b.min.y;
+  playerModel.traverse(c => { if(c.isMesh){ c.castShadow=true; c.receiveShadow=true; } });
+
+  // Replace capsule with model for player
+  playerCapsule.add(playerModel);
+  playerCapsule.children[0].visible = false; // hide body capsule
+  playerCapsule.children[1].visible = false; // hide head
+
+  // Clone for AI
+  aiModel = playerModel.clone();
+  aiModel.traverse(c => {
+    if(c.isMesh) {
+      c.material = c.material.clone();
+      c.material.color.set(0xcc2200);
+    }
+  });
+  aiCapsule.add(aiModel);
+  aiCapsule.children[0].visible = false;
+  aiCapsule.children[1].visible = false;
+
+  ltxtEl.textContent = 'Player loaded...';
   modelDone();
-}, p=>{if(p.total) ltxtEl.textContent='Player '+Math.round(p.loaded/p.total*100)+'%';},
-  ()=>{ltxtEl.textContent='Player skipped'; modelDone();});
+}, p => { if(p.total) ltxtEl.textContent = 'Player ' + Math.round(p.loaded/p.total*100) + '%'; },
+  () => { ltxtEl.textContent = 'Player skipped'; modelDone(); });
 
-// --- START ---
-pbtnEl.addEventListener('click', ()=>{ titleEl.classList.add('hide'); started=true; });
+// ==========================================================
+// START
+// ==========================================================
+pbtnEl.addEventListener('click', () => {
+  titleEl.classList.add('hide');
+  started = true;
+  resetPossession('home');
+});
 
-// --- INPUT ---
-function dn(){ if(!started||inFlight) return; charging=true; chargeT=Date.now(); pwEl.classList.add('on'); }
-function up(){ if(!charging) return; charging=false; pwEl.classList.remove('on'); shoot(); }
-function mv(x,y){ mx=(x/innerWidth)*2-1; my=-(y/innerHeight)*2+1; }
+// ==========================================================
+// INPUT
+// ==========================================================
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('mousedown', e => {
+  if(!started || ballHolder !== 'home') return;
+  const targetHoop = getTargetHoop('home');
+  const dist = playerPos.distanceTo(new THREE.Vector3(targetHoop.x, 0, targetHoop.z));
+  if(dist < DUNK_RANGE) {
+    startDunk();
+  } else if(dist < SHOOT_RANGE) {
+    charging = true;
+    chargeTime = Date.now();
+    pwEl.classList.add('on');
+  }
+});
+window.addEventListener('mouseup', e => {
+  if(charging) {
+    charging = false;
+    pwEl.classList.remove('on');
+    shoot();
+  }
+});
+window.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / innerWidth) * 2 - 1;
+  mouseY = -(e.clientY / innerHeight) * 2 + 1;
+});
 
-window.addEventListener('mousedown', dn);
-window.addEventListener('mouseup', up);
-window.addEventListener('mousemove', e=>mv(e.clientX, e.clientY));
-window.addEventListener('touchstart', e=>{e.preventDefault(); mv(e.touches[0].clientX, e.touches[0].clientY); dn();}, {passive:false});
-window.addEventListener('touchend', e=>{e.preventDefault(); up();});
-window.addEventListener('touchmove', e=>{e.preventDefault(); mv(e.touches[0].clientX, e.touches[0].clientY);}, {passive:false});
+// Touch support
+window.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  mouseX = (t.clientX / innerWidth) * 2 - 1;
+  mouseY = -(t.clientY / innerHeight) * 2 - 1;
+  if(!started || ballHolder !== 'home') return;
+  const targetHoop = getTargetHoop('home');
+  const dist = playerPos.distanceTo(new THREE.Vector3(targetHoop.x, 0, targetHoop.z));
+  if(dist < DUNK_RANGE) {
+    startDunk();
+  } else if(dist < SHOOT_RANGE) {
+    charging = true;
+    chargeTime = Date.now();
+    pwEl.classList.add('on');
+  }
+}, {passive:false});
+window.addEventListener('touchend', e => {
+  e.preventDefault();
+  if(charging) { charging = false; pwEl.classList.remove('on'); shoot(); }
+}, {passive:false});
+window.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  mouseX = (t.clientX / innerWidth) * 2 - 1;
+  mouseY = -(t.clientY / innerHeight) * 2 - 1;
+}, {passive:false});
 
-function shoot(){
-  if(inFlight) return;
-  inFlight=true; shots++; vtEl.textContent=shots;
-  const pwr=Math.min((Date.now()-chargeT)/1200, 1);
-  const ax=mx*2;
-  const s=ball.position.clone(), t=HOOP.clone();
-  t.x+=ax*0.3;
-  const dx=t.x-s.x, dy=t.y-s.y, dz=t.z-s.z;
-  const dist=Math.sqrt(dx*dx+dz*dz);
-  const spd=7+pwr*6;
-  const ang=Math.atan2(dy+2.5, dist);
-  const vh=spd*Math.cos(ang), vv=spd*Math.sin(ang);
-  const dir=Math.atan2(dz, dx);
-  vel.set(vh*Math.cos(dir), vv+2.5, vh*Math.sin(dir));
-  ball.userData.spin=new THREE.Vector3((Math.random()-.5)*4, 0, -6);
-  if(player){player.rotation.x=-0.15; setTimeout(()=>{if(player) player.rotation.x=0;}, 400);}
+// Steal
+window.addEventListener('keydown', e => {
+  if(e.code === 'KeyE' && ballHolder === 'away') {
+    const dist = playerPos.distanceTo(aiPos);
+    if(dist < 2.0) {
+      // Steal attempt — 40% chance
+      if(Math.random() < 0.4) {
+        ballHolder = 'home';
+        possession = 'home';
+        shotClock = SHOT_CLOCK_MAX;
+        popup('STEAL!', '#00e676');
+      }
+    }
+  }
+});
+
+// ==========================================================
+// GAME LOGIC
+// ==========================================================
+function getTargetHoop(team) {
+  // Home attacks toward HOOP_HOME (-Z end), Away attacks toward HOOP_AWAY (+Z end)
+  return team === 'home' ? HOOP_HOME : HOOP_AWAY;
 }
 
-function chkScore(){
+function resetPossession(team) {
+  possession = team;
+  ballHolder = team;
+  ballInFlight = false;
+  ballLoose = false;
+  scored = false;
+  isDunking = false;
+  shotClock = SHOT_CLOCK_MAX;
+
+  if(team === 'home') {
+    playerPos.set(0, 0, 6);
+    aiPos.set(0, 0, -3);
+  } else {
+    playerPos.set(0, 0, 3);
+    aiPos.set(0, 0, -6);
+  }
+  aiState = team === 'away' ? 'attack' : 'defend';
+  aiShootTimer = 0;
+}
+
+function shoot() {
+  if(ballInFlight || ballHolder !== 'home') return;
+  ballInFlight = true;
+  ballHolder = null;
+
+  const pwr = Math.min((Date.now() - chargeTime) / 1000, 1);
+  const targetHoop = getTargetHoop('home');
+  const start = ball.position.clone();
+  const target = targetHoop.clone();
+  target.x += mouseX * 0.5;
+
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  const dz = target.z - start.z;
+  const dist = Math.sqrt(dx*dx + dz*dz);
+
+  const spd = 7 + pwr * 6;
+  const ang = Math.atan2(dy + 2.5, dist);
+  const vh = spd * Math.cos(ang);
+  const vv = spd * Math.sin(ang);
+  const dir = Math.atan2(dz, dx);
+
+  ballVel.set(vh * Math.cos(dir), vv + 2.5, vh * Math.sin(dir));
+  ball.userData.spin = new THREE.Vector3((Math.random()-.5)*4, 0, -6);
+
+  // Shooting animation
+  if(playerCapsule) {
+    playerCapsule.children[0].position.y = 1.1;
+    setTimeout(() => { if(playerCapsule) playerCapsule.children[0].position.y = 0.85; }, 400);
+  }
+}
+
+function startDunk() {
+  if(ballInFlight || ballHolder !== 'home') return;
+  isDunking = true;
+  dunkProgress = 0;
+  ballHolder = null;
+  ballInFlight = true;
+  dunkStart.copy(playerPos);
+  dunkStart.y = 0;
+  dunkTarget.copy(getTargetHoop('home'));
+  dunkTarget.y = 0;
+}
+
+function aiShoot() {
+  if(ballInFlight || ballHolder !== 'away') return;
+  ballInFlight = true;
+  ballHolder = null;
+
+  const targetHoop = getTargetHoop('away');
+  const start = ball.position.clone();
+  const target = targetHoop.clone();
+  target.x += (Math.random() - 0.5) * 0.6;
+
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  const dz = target.z - start.z;
+  const dist = Math.sqrt(dx*dx + dz*dz);
+
+  const spd = 9 + Math.random() * 3;
+  const ang = Math.atan2(dy + 2.5, dist);
+  const vh = spd * Math.cos(ang);
+  const vv = spd * Math.sin(ang);
+  const dir = Math.atan2(dz, dx);
+
+  ballVel.set(vh * Math.cos(dir), vv + 2.5, vh * Math.sin(dir));
+  ball.userData.spin = new THREE.Vector3((Math.random()-.5)*4, 0, -6);
+  aiState = 'defend';
+}
+
+function checkScore(hoopPos, team) {
   if(scored) return;
-  const p=ball.position;
-  const dx=p.x-HOOP.x, dz=p.z-HOOP.z;
-  const dH=Math.sqrt(dx*dx+dz*dz);
-  if(dH<0.4 && Math.abs(p.y-HOOP.y)<0.3 && vel.y<0){
-    scored=true;
-    const pts=streak>=3?3:2;
-    score+=pts; streak++;
-    vsEl.textContent=score;
-    vpEl.textContent=Math.min(shots>0?Math.round(score/(shots*2)*100):0, 100)+'%';
-    pop(true, pts);
-    if(streak>=2){stkEl.textContent='🔥 '+streak+' STREAK'; stkEl.classList.add('on');}
+  const p = ball.position;
+  const dx = p.x - hoopPos.x, dz = p.z - hoopPos.z;
+  const dH = Math.sqrt(dx*dx + dz*dz);
+  if(dH < 0.4 && Math.abs(p.y - hoopPos.y) < 0.35 && ballVel.y < 0) {
+    scored = true;
+    // Determine points
+    const shooterPos = team === 'home' ? playerPos : aiPos;
+    const distToHoop = shooterPos.distanceTo(new THREE.Vector3(hoopPos.x, 0, hoopPos.z));
+    const pts = distToHoop > THREE_PT_DIST ? 3 : 2;
+
+    if(team === 'home') {
+      homeScore += pts;
+      homePtsEl.textContent = homeScore;
+      popup(pts === 3 ? '3-POINTER!' : isDunking ? 'SLAM DUNK!' : 'BUCKET!', '#ff8c00');
+    } else {
+      awayScore += pts;
+      awayPtsEl.textContent = awayScore;
+      popup(pts === 3 ? 'AI 3-PT!' : 'AI SCORES!', '#ff4444');
+    }
+
+    isDunking = false;
+    // After score, other team gets possession
+    setTimeout(() => resetPossession(team === 'home' ? 'away' : 'home'), 1500);
   }
 }
 
-function pop(made, pts){
-  const el=document.createElement('div'); el.className='sp';
-  if(made){el.textContent=streak>=3?'🔥 SWISH! +'+pts:'NICE! +'+pts; el.style.color='#ff8c00';}
-  else{el.textContent='MISS'; el.style.color='rgba(255,255,255,.25)'; streak=0; stkEl.classList.remove('on');}
-  $('ui').appendChild(el); setTimeout(()=>el.remove(), 1000);
+function popup(text, color) {
+  const el = document.createElement('div');
+  el.className = 'sp';
+  el.textContent = text;
+  el.style.color = color;
+  $('ui').appendChild(el);
+  setTimeout(() => el.remove(), 800);
 }
 
-// --- RESIZE ---
-window.addEventListener('resize', ()=>{cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); ren.setSize(innerWidth, innerHeight);});
+// ==========================================================
+// AI BEHAVIOR
+// ==========================================================
+function updateAI(dt) {
+  if(ballHolder === 'away') {
+    // AI has ball — attack
+    aiState = 'attack';
+    const targetHoop = getTargetHoop('away');
+    const hoopDir = new THREE.Vector3(targetHoop.x - aiPos.x, 0, targetHoop.z - aiPos.z);
+    const distToHoop = hoopDir.length();
+    hoopDir.normalize();
 
-// --- LOOP ---
-const clk=new THREE.Clock();
-!function loop(){
+    if(distToHoop < DUNK_RANGE + 0.5) {
+      // Dunk attempt
+      aiShoot();
+    } else if(distToHoop < SHOOT_RANGE && aiShootTimer > 2) {
+      // Shoot
+      if(Math.random() < 0.02) {
+        aiShoot();
+      }
+    }
+
+    // Move toward hoop with some randomness
+    const moveDir = hoopDir.clone();
+    // Add slight lateral movement
+    moveDir.x += Math.sin(Date.now() * 0.002) * 0.3;
+    moveDir.normalize();
+
+    aiPos.x += moveDir.x * AI_SPEED * dt;
+    aiPos.z += moveDir.z * AI_SPEED * dt;
+    aiFacing = Math.atan2(moveDir.x, moveDir.z);
+
+    aiShootTimer += dt;
+  } else if(ballHolder === 'home') {
+    // Defend — stay between player and hoop
+    aiState = 'defend';
+    const targetHoop = getTargetHoop('home');
+    const defX = playerPos.x * 0.7 + targetHoop.x * 0.3;
+    const defZ = playerPos.z * 0.7 + targetHoop.z * 0.3;
+
+    const dx = defX - aiPos.x;
+    const dz = defZ - aiPos.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    if(dist > 0.5) {
+      aiPos.x += (dx/dist) * AI_SPEED * dt;
+      aiPos.z += (dz/dist) * AI_SPEED * dt;
+    }
+    aiFacing = Math.atan2(playerPos.x - aiPos.x, playerPos.z - aiPos.z);
+
+    // Steal attempt
+    const playerDist = playerPos.distanceTo(aiPos);
+    if(playerDist < 1.5 && Math.random() < 0.003) {
+      ballHolder = 'away';
+      possession = 'away';
+      shotClock = SHOT_CLOCK_MAX;
+      aiShootTimer = 0;
+      popup('TURNOVER!', '#ff4444');
+    }
+  } else {
+    // Ball is loose or in flight — go toward ball
+    const dx = ball.position.x - aiPos.x;
+    const dz = ball.position.z - aiPos.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    if(dist > 1) {
+      aiPos.x += (dx/dist) * AI_SPEED * 0.6 * dt;
+      aiPos.z += (dz/dist) * AI_SPEED * 0.6 * dt;
+    }
+    aiFacing = Math.atan2(dx, dz);
+  }
+
+  // Clamp AI to court
+  aiPos.x = THREE.MathUtils.clamp(aiPos.x, -COURT_WIDTH/2, COURT_WIDTH/2);
+  aiPos.z = THREE.MathUtils.clamp(aiPos.z, -COURT_LENGTH/2, COURT_LENGTH/2);
+}
+
+// ==========================================================
+// UPDATE HUD
+// ==========================================================
+function updateHUD(dt) {
+  if(!started) return;
+
+  // Game clock
+  gameClock -= dt;
+  if(gameClock <= 0) {
+    gameClock = QUARTER_TIME;
+    quarter++;
+    if(quarter > 4) {
+      // Game over
+      popup(homeScore > awayScore ? 'YOU WIN!' : homeScore < awayScore ? 'AI WINS!' : 'TIE GAME!', '#fff');
+      quarter = 1;
+      homeScore = 0; awayScore = 0;
+      homePtsEl.textContent = '0'; awayPtsEl.textContent = '0';
+    }
+    quarterEl.textContent = ['1ST','2ND','3RD','4TH'][Math.min(quarter-1,3)] + ' QTR';
+    resetPossession('home');
+  }
+  const mins = Math.floor(gameClock / 60);
+  const secs = Math.floor(gameClock % 60);
+  clockEl.textContent = mins + ':' + (secs<10?'0':'') + secs;
+
+  // Shot clock
+  if(ballHolder) {
+    shotClock -= dt;
+    if(shotClock <= 0) {
+      shotClock = SHOT_CLOCK_MAX;
+      popup('SHOT CLOCK!', '#ff4444');
+      resetPossession(possession === 'home' ? 'away' : 'home');
+    }
+  }
+  shotClockEl.textContent = Math.ceil(Math.max(shotClock, 0));
+
+  // Action text
+  if(ballHolder === 'home') {
+    const targetHoop = getTargetHoop('home');
+    const dist = playerPos.distanceTo(new THREE.Vector3(targetHoop.x, 0, targetHoop.z));
+    if(dist < DUNK_RANGE) actionEl.textContent = 'CLICK TO DUNK!';
+    else if(dist < SHOOT_RANGE) actionEl.textContent = 'CLICK & HOLD TO SHOOT';
+    else actionEl.textContent = 'DRIBBLE TO THE HOOP';
+  } else if(ballHolder === 'away') {
+    actionEl.textContent = 'DEFEND! PRESS E TO STEAL';
+  } else {
+    actionEl.textContent = '';
+  }
+
+  // Power bar
+  if(charging) {
+    pfEl.style.width = (Math.min((Date.now()-chargeTime)/1000, 1)*100) + '%';
+  }
+}
+
+// ==========================================================
+// RESIZE
+// ==========================================================
+window.addEventListener('resize', () => {
+  cam.aspect = innerWidth / innerHeight;
+  cam.updateProjectionMatrix();
+  ren.setSize(innerWidth, innerHeight);
+});
+
+// ==========================================================
+// GAME LOOP
+// ==========================================================
+const clk = new THREE.Clock();
+
+!function loop() {
   requestAnimationFrame(loop);
-  const dt=Math.min(clk.getDelta(), 0.05);
+  const dt = Math.min(clk.getDelta(), 0.05);
+  if(!started) { ren.render(scene, cam); return; }
 
-  if(charging) pfEl.style.width=(Math.min((Date.now()-chargeT)/1200,1)*100)+'%';
+  // ------ PLAYER MOVEMENT ------
+  if(ballHolder === 'home' || !ballInFlight) {
+    const moveDir = new THREE.Vector3();
+    if(keys['KeyW'] || keys['ArrowUp']) moveDir.z -= 1;
+    if(keys['KeyS'] || keys['ArrowDown']) moveDir.z += 1;
+    if(keys['KeyA'] || keys['ArrowLeft']) moveDir.x -= 1;
+    if(keys['KeyD'] || keys['ArrowRight']) moveDir.x += 1;
 
-  if(inFlight && inFlight!=='done'){
-    vel.addScaledVector(G, dt);
-    ball.position.addScaledVector(vel, dt);
-    if(ball.userData.spin){ball.rotation.x+=ball.userData.spin.x*dt; ball.rotation.z+=ball.userData.spin.z*dt;}
-    chkScore();
+    if(moveDir.length() > 0) {
+      moveDir.normalize();
+      const speed = (keys['Space'] ? PLAYER_SPEED * SPRINT_MULT : PLAYER_SPEED) *
+                    (ballHolder === 'home' ? 0.85 : 1.0); // slower while dribbling
+      playerPos.x += moveDir.x * speed * dt;
+      playerPos.z += moveDir.z * speed * dt;
+      playerFacing = Math.atan2(moveDir.x, moveDir.z);
 
-    // Floor
-    if(ball.position.y<0.24){ball.position.y=0.24; vel.y=-vel.y*0.5; vel.x*=0.8; vel.z*=0.8; if(Math.abs(vel.y)<0.3) vel.y=0;}
-    // Backboard
-    if(ball.position.z<HOOP.z-0.3 && ball.position.z>HOOP.z-0.7 && Math.abs(ball.position.x-HOOP.x)<0.9 && ball.position.y>HOOP.y-0.3 && ball.position.y<HOOP.y+1.1){vel.z=Math.abs(vel.z)*0.6; ball.position.z=HOOP.z-0.25;}
-    // Rim
-    const rx=ball.position.x-HOOP.x, rz=ball.position.z-HOOP.z, rd=Math.sqrt(rx*rx+rz*rz);
-    if(rd>0.35 && rd<0.55 && Math.abs(ball.position.y-HOOP.y)<0.3){
-      const nx=rx/rd, nz=rz/rd, d=vel.x*nx+vel.z*nz;
-      vel.x-=1.4*d*nx; vel.z-=1.4*d*nz; vel.y*=0.7;
+      // Dribble animation
+      if(ballHolder === 'home') {
+        dribblePhase += dt * 8;
+        isDribbling = true;
+      }
+    } else {
+      isDribbling = false;
     }
-    // Reset
-    if((ball.position.y<=0.25 && vel.length()<0.4) || ball.position.y<-5 || Math.abs(ball.position.z)>25){
-      if(!scored) pop(false,0);
-      inFlight='done'; setTimeout(resetBall, 600);
-    }
-  } else if(!inFlight){
-    ball.position.y=2.2+Math.sin(Date.now()*0.004)*0.04;
-    ball.position.x=mx*0.3;
-    if(player) player.position.x+=(mx*0.3-player.position.x)*0.05;
+
+    // Clamp to court
+    playerPos.x = THREE.MathUtils.clamp(playerPos.x, -COURT_WIDTH/2, COURT_WIDTH/2);
+    playerPos.z = THREE.MathUtils.clamp(playerPos.z, -COURT_LENGTH/2, COURT_LENGTH/2);
   }
 
-  cam.position.x+=(mx*1.2-cam.position.x)*0.03;
-  cam.lookAt(0, 2.5, 0);
+  // ------ AI ------
+  updateAI(dt);
+
+  // ------ DUNK ------
+  if(isDunking) {
+    dunkProgress += dt * 2.0;
+    if(dunkProgress >= 1) {
+      // Slam it in
+      const targetHoop = getTargetHoop('home');
+      ball.position.set(targetHoop.x, targetHoop.y + 0.3, targetHoop.z);
+      ballVel.set(0, -4, 0);
+      isDunking = false;
+      scored = false; // allow score check
+    } else {
+      // Arc toward hoop
+      const targetHoop = getTargetHoop('home');
+      const t = dunkProgress;
+      ball.position.x = THREE.MathUtils.lerp(dunkStart.x, targetHoop.x, t);
+      ball.position.z = THREE.MathUtils.lerp(dunkStart.z, targetHoop.z, t);
+      // Arc height: jump up then come down to rim
+      ball.position.y = THREE.MathUtils.lerp(1.5, targetHoop.y + 0.5, t) + Math.sin(t * Math.PI) * 2;
+
+      // Player follows ball during dunk
+      playerPos.x = THREE.MathUtils.lerp(dunkStart.x, targetHoop.x, t);
+      playerPos.z = THREE.MathUtils.lerp(dunkStart.z, targetHoop.z, t);
+    }
+  }
+
+  // ------ BALL PHYSICS ------
+  if(ballInFlight && !isDunking) {
+    ballVel.addScaledVector(G_VEC, dt);
+    ball.position.addScaledVector(ballVel, dt);
+    if(ball.userData.spin) {
+      ball.rotation.x += ball.userData.spin.x * dt;
+      ball.rotation.z += ball.userData.spin.z * dt;
+    }
+
+    // Check score on both hoops
+    const attackHoop = possession === 'home' ? HOOP_HOME : HOOP_AWAY;
+    checkScore(attackHoop, possession);
+
+    // Floor bounce
+    if(ball.position.y < BALL_RADIUS) {
+      ball.position.y = BALL_RADIUS;
+      ballVel.y = -ballVel.y * 0.5;
+      ballVel.x *= 0.8;
+      ballVel.z *= 0.8;
+      if(Math.abs(ballVel.y) < 0.3) ballVel.y = 0;
+    }
+
+    // Backboard collision for both hoops
+    [HOOP_HOME, HOOP_AWAY].forEach(hoopPos => {
+      const bbZ = hoopPos.z + (hoopPos.z < 0 ? -0.5 : 0.5);
+      const behindBB = hoopPos.z < 0 ? ball.position.z < bbZ : ball.position.z > bbZ;
+      const nearBB = Math.abs(ball.position.z - bbZ) < 0.3;
+      if(nearBB && behindBB && Math.abs(ball.position.x - hoopPos.x) < 0.9 &&
+         ball.position.y > hoopPos.y - 0.3 && ball.position.y < hoopPos.y + 1.1) {
+        if(hoopPos.z < 0) ballVel.z = Math.abs(ballVel.z) * 0.6;
+        else ballVel.z = -Math.abs(ballVel.z) * 0.6;
+      }
+    });
+
+    // Rim collision for both hoops
+    [HOOP_HOME, HOOP_AWAY].forEach(hoopPos => {
+      const rx = ball.position.x - hoopPos.x;
+      const rz = ball.position.z - hoopPos.z;
+      const rd = Math.sqrt(rx*rx + rz*rz);
+      if(rd > 0.35 && rd < 0.55 && Math.abs(ball.position.y - hoopPos.y) < 0.3) {
+        const nx = rx/rd, nz = rz/rd;
+        const d = ballVel.x*nx + ballVel.z*nz;
+        ballVel.x -= 1.4*d*nx;
+        ballVel.z -= 1.4*d*nz;
+        ballVel.y *= 0.7;
+      }
+    });
+
+    // Ball out of bounds or settled — reset
+    if((ball.position.y <= BALL_RADIUS + 0.01 && ballVel.length() < 0.4) ||
+       ball.position.y < -5 ||
+       Math.abs(ball.position.x) > COURT_WIDTH/2 + 5 ||
+       Math.abs(ball.position.z) > COURT_LENGTH/2 + 5) {
+      if(!scored) {
+        popup('MISS', 'rgba(255,255,255,.25)');
+        // Rebound — whoever is closer gets it
+        const playerDist = playerPos.distanceTo(ball.position);
+        const aiDist = aiPos.distanceTo(ball.position);
+        const reboundTeam = playerDist < aiDist ? 'home' : 'away';
+        setTimeout(() => resetPossession(reboundTeam), 800);
+      }
+      ballInFlight = false;
+    }
+  }
+
+  // ------ BALL FOLLOW HOLDER ------
+  if(ballHolder === 'home' && !ballInFlight) {
+    // Dribble animation
+    const bounceY = BALL_RADIUS + Math.abs(Math.sin(dribblePhase)) * 0.6;
+    ball.position.set(
+      playerPos.x + Math.sin(playerFacing) * 0.5,
+      isDribbling ? bounceY : 1.0,
+      playerPos.z + Math.cos(playerFacing) * 0.5
+    );
+    ball.rotation.x += dt * 3;
+  } else if(ballHolder === 'away' && !ballInFlight) {
+    const aiBounce = BALL_RADIUS + Math.abs(Math.sin(Date.now() * 0.008)) * 0.6;
+    ball.position.set(
+      aiPos.x + Math.sin(aiFacing) * 0.5,
+      aiBounce,
+      aiPos.z + Math.cos(aiFacing) * 0.5
+    );
+    ball.rotation.x += dt * 3;
+  }
+
+  // ------ UPDATE VISUALS ------
+  playerCapsule.position.set(playerPos.x, 0, playerPos.z);
+  playerCapsule.rotation.y = playerFacing;
+
+  aiCapsule.position.set(aiPos.x, 0, aiPos.z);
+  aiCapsule.rotation.y = aiFacing;
+
+  // ------ NBA BROADCAST CAMERA ------
+  // Side view that follows the ball, like a TV broadcast
+  const ballX = ball.position.x;
+  const ballZ = ball.position.z;
+
+  // Camera is on the side of the court, elevated, looking across
+  const camTargetX = ballX * 0.3; // slight follow on X
+  const camTargetZ = ballZ; // follow along court length
+  const camSideOffset = COURT_WIDTH * 1.1; // how far to the side
+  const camHeight = 8;
+
+  // Smooth camera follow
+  cam.position.x += (camSideOffset - cam.position.x) * 0.03;
+  cam.position.y += (camHeight - cam.position.y) * 0.03;
+  cam.position.z += (camTargetZ - cam.position.z) * 0.05;
+
+  // Look at the action (between ball and center court)
+  const lookTarget = new THREE.Vector3(
+    ballX * 0.5,
+    2,
+    ballZ * 0.8
+  );
+  cam.lookAt(lookTarget);
+
+  // ------ HUD ------
+  updateHUD(dt);
+
   ren.render(scene, cam);
 }();
 </script>
